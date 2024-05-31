@@ -1,5 +1,8 @@
 #!/bin/bash
 
+TELEGRAM_TOKEN=""
+CHAT_ID=""
+
 # Function to display the menu
 show_menu() {
     clear
@@ -11,7 +14,8 @@ show_menu() {
     echo "3. List Snapshots (مشاهده لیست اسنپ‌شات‌ها)"
     echo "4. Restore a Snapshot (بازگرداندن اسنپ‌شات)"
     echo "5. Create a ZIP Archive from a Snapshot (ایجاد فایل فشرده ZIP از یک اسنپ‌شات)"
-    echo "6. Exit (خروج)"
+    echo "6. Configure Telegram Bot (پیکربندی ربات تلگرام)"
+    echo "7. Exit (خروج)"
     echo "================================="
 }
 
@@ -47,11 +51,41 @@ restore_snapshot() {
 
 # Function to create a ZIP archive from a snapshot
 create_zip_from_snapshot() {
-    read -p "Please enter the path of the snapshot you want to archive (لطفاً مسیر اسنپ‌شات مورد نظر خود را وارد کنید): " snapshot_path
+    local snapshot_dir="/run/timeshift/backup/timeshift/snapshots"
+    echo "Available snapshots in $snapshot_dir:"
+    ls "$snapshot_dir"
+    
+    read -p "Please enter the name of the snapshot folder you want to archive (لطفاً نام پوشه اسنپ‌شات مورد نظر خود را وارد کنید): " snapshot_folder
     read -p "Please enter the name for the ZIP archive (لطفاً نامی برای فایل فشرده ZIP وارد کنید): " zip_name
-    zip -r "$zip_name.zip" "$snapshot_path"
-    echo "Snapshot has been archived successfully. (اسنپ‌شات با موفقیت به فایل فشرده ZIP تبدیل شد.)"
+
+    if [ -d "$snapshot_dir/$snapshot_folder" ]; then
+        zip -r "$zip_name.zip" "$snapshot_dir/$snapshot_folder"
+        echo "Snapshot has been archived successfully. (اسنپ‌شات با موفقیت به فایل فشرده ZIP تبدیل شد.)"
+        send_zip_via_telegram "$zip_name.zip"
+    else
+        echo "Snapshot folder does not exist. (پوشه اسنپ‌شات وجود ندارد.)"
+    fi
+    
     ask_to_return
+}
+
+# Function to configure Telegram bot
+configure_telegram() {
+    read -p "Please enter your Telegram bot token (لطفاً توکن ربات تلگرام خود را وارد کنید): " TELEGRAM_TOKEN
+    read -p "Please enter your chat ID (لطفاً چت آی‌دی خود را وارد کنید): " CHAT_ID
+    echo "Telegram bot configured successfully. (ربات تلگرام با موفقیت پیکربندی شد.)"
+    ask_to_return
+}
+
+# Function to send ZIP file via Telegram
+send_zip_via_telegram() {
+    local zip_file="$1"
+    if [[ -z "$TELEGRAM_TOKEN" || -z "$CHAT_ID" ]]; then
+        echo "Telegram bot token or chat ID is not configured. (توکن ربات تلگرام یا چت آی‌دی پیکربندی نشده است.)"
+        return
+    fi
+    curl -F chat_id="$CHAT_ID" -F document=@"$zip_file" "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendDocument"
+    echo "ZIP file sent via Telegram successfully. (فایل فشرده با موفقیت از طریق تلگرام ارسال شد.)"
 }
 
 # Function to ask if the user wants to return to the main menu
@@ -66,7 +100,7 @@ ask_to_return() {
 # Main script
 while true; do
     show_menu
-    read -p "Please choose an option [1-6]: " choice
+    read -p "Please choose an option [1-7]: " choice
     case $choice in
         1)
             install_timeshift
@@ -84,6 +118,9 @@ while true; do
             create_zip_from_snapshot
             ;;
         6)
+            configure_telegram
+            ;;
+        7)
             echo "Exiting... (در حال خروج...)"
             exit 0
             ;;
