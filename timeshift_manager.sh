@@ -8,9 +8,10 @@ menu() {
     echo "2. Take a Snapshot"
     echo "3. View Snapshot List"
     echo "4. Restore Snapshot"
-    echo "5. Exit"
+    echo "5. Create a ZIP Archive from a Snapshot"
+    echo "6. Exit"
     echo "================================="
-    read -p "Please select an option [1-5]: " choice
+    read -p "Please select an option [1-6]: " choice
 }
 
 install_timeshift() {
@@ -51,6 +52,22 @@ restore_snapshot() {
     fi
 }
 
+create_zip_archive() {
+    echo "Available snapshots for archiving:"
+    ls -d /run/timeshift/backup/timeshift/snapshots/*/ | awk -F'/' '{print $NF}'
+    read -p "Enter the name of the snapshot directory to create a ZIP archive: " snapshot_dir
+    if [ -d "/run/timeshift/backup/timeshift/snapshots/$snapshot_dir" ]; then
+        sudo zip -r "/run/timeshift/backup/timeshift/snapshots/${snapshot_dir}.zip" "/run/timeshift/backup/timeshift/snapshots/$snapshot_dir"
+        echo "ZIP archive created successfully."
+    else
+        echo "Snapshot directory not found."
+    fi
+    read -p "Return to the main menu? (y/n): " return_choice
+    if [ "$return_choice" == "y" ]; then
+        main
+    fi
+}
+
 main() {
     menu
     case $choice in
@@ -67,6 +84,9 @@ main() {
             restore_snapshot
             ;;
         5)
+            create_zip_archive
+            ;;
+        6)
             echo "Exiting..."
             exit 0
             ;;
