@@ -2,9 +2,10 @@
 
 TELEGRAM_TOKEN=""
 CHAT_ID=""
+SNAPSHOT_DIR="/run/timeshift/backup/timeshift/snapshots"
 
-# Function to display the menu
-show_menu() {
+# Function to display the main menu
+show_main_menu() {
     clear
     echo "================================="
     echo "       Timeshift Manager         "
@@ -14,9 +15,21 @@ show_menu() {
     echo "3. List Snapshots (مشاهده لیست اسنپ‌شات‌ها)"
     echo "4. Restore a Snapshot (بازگرداندن اسنپ‌شات)"
     echo "5. Create a ZIP Archive from a Snapshot (ایجاد فایل فشرده ZIP از یک اسنپ‌شات)"
-    echo "6. Configure Telegram Bot (پیکربندی ربات تلگرام)"
+    echo "6. Send to Telegram (ارسال به تلگرام)"
     echo "7. Exit (خروج)"
     echo "================================="
+}
+
+# Function to display the "Send to Telegram" submenu
+show_telegram_submenu() {
+    clear
+    echo "==============================="
+    echo "      Send to Telegram        "
+    echo "==============================="
+    echo "1. Configure Telegram Bot (پیکربندی ربات تلگرام)"
+    echo "2. Send Backup File (ارسال فایل بکاپ)"
+    echo "3. Return to Main Menu (بازگشت به منوی اصلی)"
+    echo "==============================="
 }
 
 # Function to install Timeshift
@@ -51,17 +64,15 @@ restore_snapshot() {
 
 # Function to create a ZIP archive from a snapshot
 create_zip_from_snapshot() {
-    local snapshot_dir="/run/timeshift/backup/timeshift/snapshots"
-    echo "Available snapshots in $snapshot_dir:"
-    ls "$snapshot_dir"
+    echo "Available snapshots in $SNAPSHOT_DIR:"
+    ls "$SNAPSHOT_DIR"
     
     read -p "Please enter the name of the snapshot folder you want to archive (لطفاً نام پوشه اسنپ‌شات مورد نظر خود را وارد کنید): " snapshot_folder
     read -p "Please enter the name for the ZIP archive (لطفاً نامی برای فایل فشرده ZIP وارد کنید): " zip_name
 
-    if [ -d "$snapshot_dir/$snapshot_folder" ]; then
-        zip -r "$zip_name.zip" "$snapshot_dir/$snapshot_folder"
+    if [ -d "$SNAPSHOT_DIR/$snapshot_folder" ]; then
+        zip -r "$SNAPSHOT_DIR/$zip_name.zip" "$SNAPSHOT_DIR/$snapshot_folder"
         echo "Snapshot has been archived successfully. (اسنپ‌شات با موفقیت به فایل فشرده ZIP تبدیل شد.)"
-        send_zip_via_telegram "$zip_name.zip"
     else
         echo "Snapshot folder does not exist. (پوشه اسنپ‌شات وجود ندارد.)"
     fi
@@ -78,54 +89,24 @@ configure_telegram() {
 }
 
 # Function to send ZIP file via Telegram
-send_zip_via_telegram() {
-    local zip_file="$1"
-    if [[ -z "$TELEGRAM_TOKEN" || -z "$CHAT_ID" ]]; then
-        echo "Telegram bot token or chat ID is not configured. (توکن ربات تلگرام یا چت آی‌دی پیکربندی نشده است.)"
-        return
+send_backup_file_via_telegram() {
+    echo "Available snapshots in $SNAPSHOT_DIR:"
+    ls "$SNAPSHOT_DIR"
+
+    read -p "Please enter the name of the ZIP file you want to send (لطفاً نام فایل ZIP مورد نظر خود را وارد کنید): " zip_file
+
+    if [ -f "$SNAPSHOT_DIR/$zip_file" ]; then
+        if [[ -z "$TELEGRAM_TOKEN" || -z "$CHAT_ID" ]]; then
+            echo "Telegram bot token or chat ID is not configured. (توکن ربات تلگرام یا چت آی‌دی پیکربندی نشده است.)"
+            ask_to_return
+        fi
+        curl -F chat_id="$CHAT_ID" -F document=@"$SNAPSHOT_DIR/$zip_file" "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendDocument"
+        echo "ZIP file sent via Telegram successfully. (فایل ZIP با موفقیت از طریق تلگرام ارسال شد.)"
+    else
+        echo "File not found in $SNAPSHOT_DIR. (فایل در $SNAPSHOT_DIR پیدا نشد.)"
     fi
-    curl -F chat_id="$CHAT_ID" -F document=@"$zip_file" "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendDocument"
-    echo "ZIP file sent via Telegram successfully. (فایل فشرده با موفقیت از طریق تلگرام ارسال شد.)"
+
+    ask_to_return
 }
 
-# Function to ask if the user wants to return to the main menu
-ask_to_return() {
-    read -p "Do you want to return to the main menu? [Y/n]: " choice
-    case $choice in
-        [Yy]* ) ;;
-        * ) exit 0;;
-    esac
-}
-
-# Main script
-while true; do
-    show_menu
-    read -p "Please choose an option [1-7]: " choice
-    case $choice in
-        1)
-            install_timeshift
-            ;;
-        2)
-            take_snapshot
-            ;;
-        3)
-            list_snapshots
-            ;;
-        4)
-            restore_snapshot
-            ;;
-        5)
-            create_zip_from_snapshot
-            ;;
-        6)
-            configure_telegram
-            ;;
-        7)
-            echo "Exiting... (در حال خروج...)"
-            exit 0
-            ;;
-        *)
-            echo "Invalid option. Please try again. (گزینه نامعتبر است. لطفاً دوباره امتحان کنید.)"
-            ;;
-    esac
-done
+# Function
