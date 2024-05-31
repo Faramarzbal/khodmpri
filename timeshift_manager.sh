@@ -10,7 +10,8 @@ show_menu() {
     echo "2. Take a Snapshot (گرفتن اسنپ‌شات)"
     echo "3. List Snapshots (مشاهده لیست اسنپ‌شات‌ها)"
     echo "4. Restore a Snapshot (بازگرداندن اسنپ‌شات)"
-    echo "5. Exit (خروج)"
+    echo "5. Create a ZIP Archive from a Snapshot (ایجاد فایل فشرده ZIP از یک اسنپ‌شات)"
+    echo "6. Exit (خروج)"
     echo "================================="
 }
 
@@ -44,6 +45,15 @@ restore_snapshot() {
     ask_to_return
 }
 
+# Function to create a ZIP archive from a snapshot
+create_zip_from_snapshot() {
+    read -p "Please enter the path of the snapshot you want to archive (لطفاً مسیر اسنپ‌شات مورد نظر خود را وارد کنید): " snapshot_path
+    read -p "Please enter the name for the ZIP archive (لطفاً نامی برای فایل فشرده ZIP وارد کنید): " zip_name
+    zip -r "$zip_name.zip" "$snapshot_path"
+    echo "Snapshot has been archived successfully. (اسنپ‌شات با موفقیت به فایل فشرده ZIP تبدیل شد.)"
+    ask_to_return
+}
+
 # Function to ask if the user wants to return to the main menu
 ask_to_return() {
     read -p "Do you want to return to the main menu? [Y/n]: " choice
@@ -56,7 +66,7 @@ ask_to_return() {
 # Main script
 while true; do
     show_menu
-    read -p "Please choose an option [1-5]: " choice
+    read -p "Please choose an option [1-6]: " choice
     case $choice in
         1)
             install_timeshift
@@ -71,6 +81,9 @@ while true; do
             restore_snapshot
             ;;
         5)
+            create_zip_from_snapshot
+            ;;
+        6)
             echo "Exiting... (در حال خروج...)"
             exit 0
             ;;
