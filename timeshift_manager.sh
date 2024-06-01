@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SNAPSHOT_PATH="/run/timeshift/backup/timeshift/snapshots"
+SNAPSHOT_PATH="/timeshift/snapshots"
 
 # Function to display the menu
 display_menu() {
@@ -63,55 +63,4 @@ compress_snapshot() {
 # Function to ask user to return to menu or exit
 ask_return_or_exit() {
     echo
-    echo "Would you like to:"
-    echo "1. Return to the main menu"
-    echo "2. Exit the script"
-    read -p "Enter your choice (1-2): " return_choice
-
-    case $return_choice in
-        1)
-            return 0
-            ;;
-        2)
-            echo "Exiting the script. Goodbye!"
-            exit 0
-            ;;
-        *)
-            echo "Invalid option. Exiting the script."
-            exit 1
-            ;;
-    esac
-}
-
-# Main script logic
-while true; do
-    display_menu
-    read -p "Enter your choice (1-6): " choice
-
-    case $choice in
-        1)
-            install_timeshift
-            ;;
-        2)
-            create_snapshot
-            ;;
-        3)
-            list_snapshots
-            ;;
-        4)
-            restore_snapshot
-            ;;
-        5)
-            compress_snapshot
-            ;;
-        6)
-            echo "Exiting the script. Goodbye!"
-            exit 0
-            ;;
-        *)
-            echo "Invalid option. Please try again."
-            ;;
-    esac
-
-    ask_return_or_exit
-done
+    echo "Woul
