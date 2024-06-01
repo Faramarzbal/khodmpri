@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Ensure zip is installed
+if ! command -v zip &> /dev/null
+then
+    echo "zip command not found. Installing zip..."
+    sudo apt update
+    sudo apt install zip -y
+fi
+
 TELEGRAM_TOKEN=""
 CHAT_ID=""
 
