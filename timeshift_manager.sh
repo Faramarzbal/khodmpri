@@ -1,78 +1,88 @@
 #!/bin/bash
 
 # Function to display the menu
-show_menu() {
-    clear
-    echo "================================="
-    echo "       Timeshift Manager         "
-    echo "================================="
-    echo "1. Install Timeshift (نصب Timeshift)"
-    echo "2. Take a Snapshot (گرفتن اسنپ‌شات)"
-    echo "3. List Snapshots (مشاهده لیست اسنپ‌شات‌ها)"
-    echo "4. Restore a Snapshot (بازگرداندن اسنپ‌شات)"
-    echo "5. Create a ZIP Archive from a Snapshot (ایجاد فایل فشرده ZIP از یک اسنپ‌شات)"
-    echo "6. Exit (خروج)"
-    echo "================================="
+display_menu() {
+    echo "Please choose an option:"
+    echo "1. Install Timeshift"
+    echo "2. Create a new snapshot"
+    echo "3. List snapshots"
+    echo "4. Restore system from a snapshot"
+    echo "5. Compress a snapshot to tar.gz"
+    echo "6. Exit"
 }
 
 # Function to install Timeshift
 install_timeshift() {
-    sudo add-apt-repository -y ppa:teejee2008/ppa
+    echo "Installing Timeshift..."
     sudo apt update
     sudo apt install -y timeshift
-    echo "Timeshift has been successfully installed. (Timeshift با موفقیت نصب شد.)"
-    ask_to_return
+    echo "Timeshift has been successfully installed."
 }
 
-# Function to take a snapshot
-take_snapshot() {
-    sudo timeshift --create --comments "Manual Snapshot"
-    echo "A new snapshot has been successfully taken. (اسنپ‌شات جدید با موفقیت گرفته شد.)"
-    ask_to_return
+# Function to create a new snapshot
+create_snapshot() {
+    echo "Creating a new snapshot..."
+    sudo timeshift --create --comments "New snapshot"
+    echo "New snapshot created successfully."
 }
 
 # Function to list snapshots
 list_snapshots() {
+    echo "Available snapshots:"
     sudo timeshift --list
-    ask_to_return
 }
 
-# Function to restore a snapshot
+# Function to restore system from a snapshot
 restore_snapshot() {
-    sudo timeshift --list
-    read -p "Please enter the snapshot number to restore (لطفاً نام اسنپ‌شات مورد نظر برای بازگردانی را وارد کنید): " snapshot
+    read -p "Enter the name of the snapshot to restore: " snapshot
+    echo "Restoring system from snapshot $snapshot..."
     sudo timeshift --restore --snapshot "$snapshot"
-    ask_to_return
+    echo "System restored successfully from snapshot $snapshot."
 }
 
-# Function to create a ZIP archive from a snapshot
-create_zip_from_snapshot() {
-    read -p "Please enter the path of the snapshot you want to archive (لطفاً مسیر اسنپ‌شات مورد نظر خود را وارد کنید): " snapshot_path
-    read -p "Please enter the name for the ZIP archive (لطفاً نامی برای فایل فشرده ZIP وارد کنید): " zip_name
-    zip -r "$zip_name.zip" "$snapshot_path"
-    echo "Snapshot has been archived successfully. (اسنپ‌شات با موفقیت به فایل فشرده ZIP تبدیل شد.)"
-    ask_to_return
+# Function to compress a snapshot to tar.gz
+compress_snapshot() {
+    read -p "Enter the full path of the snapshot folder to compress: " snapshot_folder
+    read -p "Enter the name of the output tar.gz file (e.g., archive.tar.gz): " output_file
+    echo "Compressing snapshot $snapshot_folder to $output_file..."
+    tar -czvf "$output_file" "$snapshot_folder"
+    echo "Snapshot compressed successfully to $output_file."
 }
 
-# Function to ask if the user wants to return to the main menu
-ask_to_return() {
-    read -p "Do you want to return to the main menu? [Y/n]: " choice
-    case $choice in
-        [Yy]* ) ;;
-        * ) exit 0;;
+# Function to ask user to return to menu or exit
+ask_return_or_exit() {
+    echo
+    echo "Would you like to:"
+    echo "1. Return to the main menu"
+    echo "2. Exit the script"
+    read -p "Enter your choice (1-2): " return_choice
+
+    case $return_choice in
+        1)
+            return 0
+            ;;
+        2)
+            echo "Exiting the script. Goodbye!"
+            exit 0
+            ;;
+        *)
+            echo "Invalid option. Exiting the script."
+            exit 1
+            ;;
     esac
 }
 
-# Main script
+# Main script logic
 while true; do
-    show_menu
-    read -p "Please choose an option [1-6]: " choice
+    display_menu
+    read -p "Enter your choice (1-6): " choice
+
     case $choice in
         1)
             install_timeshift
             ;;
         2)
-            take_snapshot
+            create_snapshot
             ;;
         3)
             list_snapshots
@@ -81,14 +91,16 @@ while true; do
             restore_snapshot
             ;;
         5)
-            create_zip_from_snapshot
+            compress_snapshot
             ;;
         6)
-            echo "Exiting... (در حال خروج...)"
+            echo "Exiting the script. Goodbye!"
             exit 0
             ;;
         *)
-            echo "Invalid option. Please try again. (گزینه نامعتبر است. لطفاً دوباره امتحان کنید.)"
+            echo "Invalid option. Please try again."
             ;;
     esac
+
+    ask_return_or_exit
 done
