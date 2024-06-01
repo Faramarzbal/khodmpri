@@ -10,7 +10,6 @@ display_menu() {
     echo "3. List snapshots"
     echo "4. Restore system from a snapshot"
     echo "5. Create a ZIP Archive from a snapshot"
-    echo "6. Exit"
 }
 
 # Function to install Timeshift
@@ -59,6 +58,39 @@ compress_snapshot() {
         echo "Snapshot folder $snapshot_folder does not exist."
     fi
 }
+# Function to send ZIP Archive to Telegram
+send_to_telegram() {
+    python3 << END
+import telebot
+import os
+
+# Replace 'YOUR_BOT_TOKEN' with your bot's token
+bot = telebot.TeleBot('YOUR_BOT_TOKEN')
+
+# Function to send a file to admin
+def send_file_to_admin(chat_id, file_path):
+    try:
+        bot.send_document(chat_id, open(file_path, 'rb'))
+        print("File sent successfully.")
+    except Exception as e:
+        print("Error sending file:", e)
+
+# Main function
+def main():
+    # Get bot token and admin chat id from user
+    bot_token = input("Enter your bot token: ")
+    admin_chat_id = input("Enter your admin chat id: ")
+
+    # Get file path from user
+    file_path = input("Enter the full path of the ZIP file to send: ")
+
+    # Send file to admin
+    send_file_to_admin(admin_chat_id, file_path)
+
+if __name__ == "__main__":
+    main()
+END
+}
 
 # Function to ask user to return to menu or exit
 ask_return_or_exit() {
@@ -86,7 +118,7 @@ ask_return_or_exit() {
 # Main script logic
 while true; do
     display_menu
-    read -p "Enter your choice (1-6): " choice
+    read -p "Enter your choice (1-5): " choice
 
     case $choice in
         1)
@@ -103,10 +135,6 @@ while true; do
             ;;
         5)
             compress_snapshot
-            ;;
-        6)
-            echo "Exiting the script. Goodbye!"
-            exit 0
             ;;
         *)
             echo "Invalid option. Please try again."
